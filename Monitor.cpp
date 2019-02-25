@@ -53,12 +53,17 @@
 //================================================================
 //  State         |  Inherited (no method)
 //  Status        |  Inherited (no method)
+//  StartCount    |  start_count
+//  StopCount     |  stop_count
+//  ResetCounter  |  reset_counter
 //================================================================
 
 //================================================================
-//  Attributes managed is:
+//  Attributes managed are:
 //================================================================
-//  Count  |  Tango::DevULong	Scalar
+//  Count         |  Tango::DevULong	Scalar
+//  TimeInterval  |  Tango::DevLong	Scalar
+//  Complete      |  Tango::DevBoolean	Scalar
 //================================================================
 
 namespace Monitor_ns
@@ -114,10 +119,11 @@ void Monitor::delete_device()
 	DEBUG_STREAM << "Monitor::delete_device() " << device_name << endl;
 	/*----- PROTECTED REGION ID(Monitor::delete_device) ENABLED START -----*/
 	
-	//	Delete device allocated objects
+	delete cr;
 	
 	/*----- PROTECTED REGION END -----*/	//	Monitor::delete_device
 	delete[] attr_Count_read;
+	delete[] attr_Complete_read;
 }
 
 //--------------------------------------------------------
@@ -135,16 +141,96 @@ void Monitor::init_device()
 	
 	/*----- PROTECTED REGION END -----*/	//	Monitor::init_device_before
 	
-	//	No device property to be read from database
+
+	//	Get the device properties from database
+	get_device_property();
 	
 	attr_Count_read = new Tango::DevULong[1];
+	attr_Complete_read = new Tango::DevBoolean[1];
 	/*----- PROTECTED REGION ID(Monitor::init_device) ENABLED START -----*/
 	
-	//	Initialize device
-	
+	cr = new Counter(device);
+	if(cr->status < 0){
+		device_state = Tango::FAULT;
+		switch(cr->status){
+			case COUNTER_STATUS_ERROR_FILE_DESCRIPTOR:
+				device_status = "Device " + device + " is fault. =(\n";
+				break;
+			case COUNTER_STATUS_NOT_COUNTER_DEVICE:
+				device_status = "This is not counter device! =(\n";
+				break;
+		}
+		return;
+	}
+	device_state = Tango::ON;
+	device_status = "device " + device + " is open. =)\n";
+
 	/*----- PROTECTED REGION END -----*/	//	Monitor::init_device
 }
 
+//--------------------------------------------------------
+/**
+ *	Method      : Monitor::get_device_property()
+ *	Description : Read database to initialize property data members.
+ */
+//--------------------------------------------------------
+void Monitor::get_device_property()
+{
+	/*----- PROTECTED REGION ID(Monitor::get_device_property_before) ENABLED START -----*/
+	
+	//	Initialize property data members
+	
+	/*----- PROTECTED REGION END -----*/	//	Monitor::get_device_property_before
+
+
+	//	Read device properties from database.
+	Tango::DbData	dev_prop;
+	dev_prop.push_back(Tango::DbDatum("Device"));
+	dev_prop.push_back(Tango::DbDatum("channel"));
+
+	//	is there at least one property to be read ?
+	if (dev_prop.size()>0)
+	{
+		//	Call database and extract values
+		if (Tango::Util::instance()->_UseDb==true)
+			get_db_device()->get_property(dev_prop);
+	
+		//	get instance on MonitorClass to get class property
+		Tango::DbDatum	def_prop, cl_prop;
+		MonitorClass	*ds_class =
+			(static_cast<MonitorClass *>(get_device_class()));
+		int	i = -1;
+
+		//	Try to initialize Device from class property
+		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
+		if (cl_prop.is_empty()==false)	cl_prop  >>  device;
+		else {
+			//	Try to initialize Device from default device value
+			def_prop = ds_class->get_default_device_property(dev_prop[i].name);
+			if (def_prop.is_empty()==false)	def_prop  >>  device;
+		}
+		//	And try to extract Device value from database
+		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  device;
+
+		//	Try to initialize channel from class property
+		cl_prop = ds_class->get_class_property(dev_prop[++i].name);
+		if (cl_prop.is_empty()==false)	cl_prop  >>  channel;
+		else {
+			//	Try to initialize channel from default device value
+			def_prop = ds_class->get_default_device_property(dev_prop[i].name);
+			if (def_prop.is_empty()==false)	def_prop  >>  channel;
+		}
+		//	And try to extract channel value from database
+		if (dev_prop[i].is_empty()==false)	dev_prop[i]  >>  channel;
+
+	}
+
+	/*----- PROTECTED REGION ID(Monitor::get_device_property_after) ENABLED START -----*/
+	
+	//	Check device property data members init
+	
+	/*----- PROTECTED REGION END -----*/	//	Monitor::get_device_property_after
+}
 
 //--------------------------------------------------------
 /**
@@ -177,6 +263,21 @@ void Monitor::read_attr_hardware(TANGO_UNUSED(vector<long> &attr_list))
 	
 	/*----- PROTECTED REGION END -----*/	//	Monitor::read_attr_hardware
 }
+//--------------------------------------------------------
+/**
+ *	Method      : Monitor::write_attr_hardware()
+ *	Description : Hardware writing for attributes
+ */
+//--------------------------------------------------------
+void Monitor::write_attr_hardware(TANGO_UNUSED(vector<long> &attr_list))
+{
+	DEBUG_STREAM << "Monitor::write_attr_hardware(vector<long> &attr_list) entering... " << endl;
+	/*----- PROTECTED REGION ID(Monitor::write_attr_hardware) ENABLED START -----*/
+	
+	//	Add your own code
+	
+	/*----- PROTECTED REGION END -----*/	//	Monitor::write_attr_hardware
+}
 
 //--------------------------------------------------------
 /**
@@ -191,10 +292,70 @@ void Monitor::read_Count(Tango::Attribute &attr)
 {
 	DEBUG_STREAM << "Monitor::read_Count(Tango::Attribute &attr) entering... " << endl;
 	/*----- PROTECTED REGION ID(Monitor::read_Count) ENABLED START -----*/
-	//	Set the attribute value
+	*attr_Count_read = 0;
+	if(cr->status < 0){
+		return;
+	};
+
+	/* procedure for read counts from counter */
+
+	*attr_Count_read = cr->readCounter(channel);;
+
 	attr.set_value(attr_Count_read);
 	
 	/*----- PROTECTED REGION END -----*/	//	Monitor::read_Count
+}
+//--------------------------------------------------------
+/**
+ *	Write attribute TimeInterval related method
+ *	Description: Time interval in ms
+ *
+ *	Data type:	Tango::DevLong
+ *	Attr type:	Scalar
+ */
+//--------------------------------------------------------
+void Monitor::write_TimeInterval(Tango::WAttribute &attr)
+{
+	DEBUG_STREAM << "Monitor::write_TimeInterval(Tango::WAttribute &attr) entering... " << endl;
+	//	Retrieve write value
+	Tango::DevLong	w_val;
+	attr.get_write_value(w_val);
+	/*----- PROTECTED REGION ID(Monitor::write_TimeInterval) ENABLED START -----*/
+
+	std::cout << "set time interval: " << std::dec << w_val << "\n";
+	cr->setTimeInterval(w_val);
+
+
+	/*----- PROTECTED REGION END -----*/	//	Monitor::write_TimeInterval
+}
+//--------------------------------------------------------
+/**
+ *	Read attribute Complete related method
+ *	Description: 
+ *
+ *	Data type:	Tango::DevBoolean
+ *	Attr type:	Scalar
+ */
+//--------------------------------------------------------
+void Monitor::read_Complete(Tango::Attribute &attr)
+{
+	DEBUG_STREAM << "Monitor::read_Complete(Tango::Attribute &attr) entering... " << endl;
+	/*----- PROTECTED REGION ID(Monitor::read_Complete) ENABLED START -----*/
+	//	Set the attribute value
+
+	*attr_Complete_read = cr->testTimer();
+
+	attr.set_value(attr_Complete_read);
+	if(*attr_Complete_read) {
+		device_state = Tango::ON;
+		device_status = "Ok";
+		cr->stopTimer();
+		std::cout << "timer: "<< std::dec << cr->readTimer() << "\n";
+		cr->resetTimer();
+        std::cout << "timer reset: " <<  std::dec << cr->readTimer() << "\n";
+	}
+	
+	/*----- PROTECTED REGION END -----*/	//	Monitor::read_Complete
 }
 
 //--------------------------------------------------------
@@ -213,6 +374,56 @@ void Monitor::add_dynamic_attributes()
 	/*----- PROTECTED REGION END -----*/	//	Monitor::add_dynamic_attributes
 }
 
+//--------------------------------------------------------
+/**
+ *	Command StartCount related method
+ *	Description: 
+ *
+ */
+//--------------------------------------------------------
+void Monitor::start_count()
+{
+	DEBUG_STREAM << "Monitor::StartCount()  - " << device_name << endl;
+	/*----- PROTECTED REGION ID(Monitor::start_count) ENABLED START -----*/
+	
+	cr->startTimer();
+	device_state = Tango::MOVING;
+	device_status = "Counting...";
+	
+	/*----- PROTECTED REGION END -----*/	//	Monitor::start_count
+}
+//--------------------------------------------------------
+/**
+ *	Command StopCount related method
+ *	Description: 
+ *
+ */
+//--------------------------------------------------------
+void Monitor::stop_count()
+{
+	DEBUG_STREAM << "Monitor::StopCount()  - " << device_name << endl;
+	/*----- PROTECTED REGION ID(Monitor::stop_count) ENABLED START -----*/
+	
+	//	Add your own code
+	
+	/*----- PROTECTED REGION END -----*/	//	Monitor::stop_count
+}
+//--------------------------------------------------------
+/**
+ *	Command ResetCounter related method
+ *	Description: Reset Counter and Timer
+ *
+ */
+//--------------------------------------------------------
+void Monitor::reset_counter()
+{
+	DEBUG_STREAM << "Monitor::ResetCounter()  - " << device_name << endl;
+	/*----- PROTECTED REGION ID(Monitor::reset_counter) ENABLED START -----*/
+	
+	//	Add your own code
+	
+	/*----- PROTECTED REGION END -----*/	//	Monitor::reset_counter
+}
 //--------------------------------------------------------
 /**
  *	Method      : Monitor::add_dynamic_commands()

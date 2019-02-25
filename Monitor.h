@@ -58,14 +58,23 @@ class Monitor : public TANGO_BASE_CLASS
 
 /*----- PROTECTED REGION ID(Monitor::Data Members) ENABLED START -----*/
 
-//	Add your own data members
+public:
+	Counter *cr;
 
 /*----- PROTECTED REGION END -----*/	//	Monitor::Data Members
 
+//	Device property data members
+public:
+	//	Device:	path to device
+	string	device;
+	//	channel:	channel of counter
+	//  note: timer settings for all 4 channels
+	Tango::DevShort	channel;
 
 //	Attribute data members
 public:
 	Tango::DevULong	*attr_Count_read;
+	Tango::DevBoolean	*attr_Complete_read;
 
 //	Constructors and destructors
 public:
@@ -108,6 +117,10 @@ public:
 	 */
 	virtual void init_device();
 	/*
+	 *	Read the device properties from database
+	 */
+	void get_device_property();
+	/*
 	 *	Always executed method before execution command method.
 	 */
 	virtual void always_executed_hook();
@@ -122,6 +135,13 @@ public:
 	 */
 	//--------------------------------------------------------
 	virtual void read_attr_hardware(vector<long> &attr_list);
+	//--------------------------------------------------------
+	/*
+	 *	Method      : Monitor::write_attr_hardware()
+	 *	Description : Hardware writing for attributes.
+	 */
+	//--------------------------------------------------------
+	virtual void write_attr_hardware(vector<long> &attr_list);
 
 /**
  *	Attribute Count related methods
@@ -132,6 +152,24 @@ public:
  */
 	virtual void read_Count(Tango::Attribute &attr);
 	virtual bool is_Count_allowed(Tango::AttReqType type);
+/**
+ *	Attribute TimeInterval related methods
+ *	Description: Time interval in ms
+ *
+ *	Data type:	Tango::DevLong
+ *	Attr type:	Scalar
+ */
+	virtual void write_TimeInterval(Tango::WAttribute &attr);
+	virtual bool is_TimeInterval_allowed(Tango::AttReqType type);
+/**
+ *	Attribute Complete related methods
+ *	Description: 
+ *
+ *	Data type:	Tango::DevBoolean
+ *	Attr type:	Scalar
+ */
+	virtual void read_Complete(Tango::Attribute &attr);
+	virtual bool is_Complete_allowed(Tango::AttReqType type);
 
 
 	//--------------------------------------------------------
@@ -147,6 +185,27 @@ public:
 
 //	Command related methods
 public:
+	/**
+	 *	Command StartCount related method
+	 *	Description: 
+	 *
+	 */
+	virtual void start_count();
+	virtual bool is_StartCount_allowed(const CORBA::Any &any);
+	/**
+	 *	Command StopCount related method
+	 *	Description: 
+	 *
+	 */
+	virtual void stop_count();
+	virtual bool is_StopCount_allowed(const CORBA::Any &any);
+	/**
+	 *	Command ResetCounter related method
+	 *	Description: Reset Counter and Timer
+	 *
+	 */
+	virtual void reset_counter();
+	virtual bool is_ResetCounter_allowed(const CORBA::Any &any);
 
 
 	//--------------------------------------------------------

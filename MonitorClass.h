@@ -68,6 +68,105 @@ public:
 		{return (static_cast<Monitor *>(dev))->is_Count_allowed(ty);}
 };
 
+//	Attribute TimeInterval class definition
+class TimeIntervalAttrib: public Tango::Attr
+{
+public:
+	TimeIntervalAttrib():Attr("TimeInterval",
+			Tango::DEV_LONG, Tango::WRITE) {};
+	~TimeIntervalAttrib() {};
+	virtual void write(Tango::DeviceImpl *dev,Tango::WAttribute &att)
+		{(static_cast<Monitor *>(dev))->write_TimeInterval(att);}
+	virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
+		{return (static_cast<Monitor *>(dev))->is_TimeInterval_allowed(ty);}
+};
+
+//	Attribute Complete class definition
+class CompleteAttrib: public Tango::Attr
+{
+public:
+	CompleteAttrib():Attr("Complete",
+			Tango::DEV_BOOLEAN, Tango::READ) {};
+	~CompleteAttrib() {};
+	virtual void read(Tango::DeviceImpl *dev,Tango::Attribute &att)
+		{(static_cast<Monitor *>(dev))->read_Complete(att);}
+	virtual bool is_allowed(Tango::DeviceImpl *dev,Tango::AttReqType ty)
+		{return (static_cast<Monitor *>(dev))->is_Complete_allowed(ty);}
+};
+
+
+//=========================================
+//	Define classes for commands
+//=========================================
+//	Command StartCount class definition
+class StartCountClass : public Tango::Command
+{
+public:
+	StartCountClass(const char   *name,
+	               Tango::CmdArgType in,
+				   Tango::CmdArgType out,
+				   const char        *in_desc,
+				   const char        *out_desc,
+				   Tango::DispLevel  level)
+	:Command(name,in,out,in_desc,out_desc, level)	{};
+
+	StartCountClass(const char   *name,
+	               Tango::CmdArgType in,
+				   Tango::CmdArgType out)
+	:Command(name,in,out)	{};
+	~StartCountClass() {};
+	
+	virtual CORBA::Any *execute (Tango::DeviceImpl *dev, const CORBA::Any &any);
+	virtual bool is_allowed (Tango::DeviceImpl *dev, const CORBA::Any &any)
+	{return (static_cast<Monitor *>(dev))->is_StartCount_allowed(any);}
+};
+
+//	Command StopCount class definition
+class StopCountClass : public Tango::Command
+{
+public:
+	StopCountClass(const char   *name,
+	               Tango::CmdArgType in,
+				   Tango::CmdArgType out,
+				   const char        *in_desc,
+				   const char        *out_desc,
+				   Tango::DispLevel  level)
+	:Command(name,in,out,in_desc,out_desc, level)	{};
+
+	StopCountClass(const char   *name,
+	               Tango::CmdArgType in,
+				   Tango::CmdArgType out)
+	:Command(name,in,out)	{};
+	~StopCountClass() {};
+	
+	virtual CORBA::Any *execute (Tango::DeviceImpl *dev, const CORBA::Any &any);
+	virtual bool is_allowed (Tango::DeviceImpl *dev, const CORBA::Any &any)
+	{return (static_cast<Monitor *>(dev))->is_StopCount_allowed(any);}
+};
+
+//	Command ResetCounter class definition
+class ResetCounterClass : public Tango::Command
+{
+public:
+	ResetCounterClass(const char   *name,
+	               Tango::CmdArgType in,
+				   Tango::CmdArgType out,
+				   const char        *in_desc,
+				   const char        *out_desc,
+				   Tango::DispLevel  level)
+	:Command(name,in,out,in_desc,out_desc, level)	{};
+
+	ResetCounterClass(const char   *name,
+	               Tango::CmdArgType in,
+				   Tango::CmdArgType out)
+	:Command(name,in,out)	{};
+	~ResetCounterClass() {};
+	
+	virtual CORBA::Any *execute (Tango::DeviceImpl *dev, const CORBA::Any &any);
+	virtual bool is_allowed (Tango::DeviceImpl *dev, const CORBA::Any &any)
+	{return (static_cast<Monitor *>(dev))->is_ResetCounter_allowed(any);}
+};
+
 
 /**
  *	The MonitorClass singleton definition

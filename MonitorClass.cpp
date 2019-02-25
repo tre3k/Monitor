@@ -149,6 +149,60 @@ MonitorClass *MonitorClass::instance()
 //===================================================================
 //	Command execution method calls
 //===================================================================
+//--------------------------------------------------------
+/**
+ * method : 		StartCountClass::execute()
+ * description : 	method to trigger the execution of the command.
+ *
+ * @param	device	The device on which the command must be executed
+ * @param	in_any	The command input data
+ *
+ *	returns The command output data (packed in the Any object)
+ */
+//--------------------------------------------------------
+CORBA::Any *StartCountClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(const CORBA::Any &in_any))
+{
+	cout2 << "StartCountClass::execute(): arrived" << endl;
+	((static_cast<Monitor *>(device))->start_count());
+	return new CORBA::Any();
+}
+
+//--------------------------------------------------------
+/**
+ * method : 		StopCountClass::execute()
+ * description : 	method to trigger the execution of the command.
+ *
+ * @param	device	The device on which the command must be executed
+ * @param	in_any	The command input data
+ *
+ *	returns The command output data (packed in the Any object)
+ */
+//--------------------------------------------------------
+CORBA::Any *StopCountClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(const CORBA::Any &in_any))
+{
+	cout2 << "StopCountClass::execute(): arrived" << endl;
+	((static_cast<Monitor *>(device))->stop_count());
+	return new CORBA::Any();
+}
+
+//--------------------------------------------------------
+/**
+ * method : 		ResetCounterClass::execute()
+ * description : 	method to trigger the execution of the command.
+ *
+ * @param	device	The device on which the command must be executed
+ * @param	in_any	The command input data
+ *
+ *	returns The command output data (packed in the Any object)
+ */
+//--------------------------------------------------------
+CORBA::Any *ResetCounterClass::execute(Tango::DeviceImpl *device, TANGO_UNUSED(const CORBA::Any &in_any))
+{
+	cout2 << "ResetCounterClass::execute(): arrived" << endl;
+	((static_cast<Monitor *>(device))->reset_counter());
+	return new CORBA::Any();
+}
+
 
 //===================================================================
 //	Properties management
@@ -218,6 +272,34 @@ void MonitorClass::set_default_property()
 	//	Set Default Class Properties
 
 	//	Set Default device Properties
+	prop_name = "Device";
+	prop_desc = "path to device";
+	prop_def  = "/dev/plxdev1";
+	vect_data.clear();
+	vect_data.push_back("/dev/plxdev1");
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
+	prop_name = "channel";
+	prop_desc = "channel of counter\nnote: timer settings for all 4 channels";
+	prop_def  = "0";
+	vect_data.clear();
+	vect_data.push_back("0");
+	if (prop_def.length()>0)
+	{
+		Tango::DbDatum	data(prop_name);
+		data << vect_data ;
+		dev_def_prop.push_back(data);
+		add_wiz_dev_prop(prop_name, prop_desc,  prop_def);
+	}
+	else
+		add_wiz_dev_prop(prop_name, prop_desc);
 }
 
 //--------------------------------------------------------
@@ -343,10 +425,58 @@ void MonitorClass::attribute_factory(vector<Tango::Attr *> &att_list)
 	//	delta_val	not set for Count
 	
 	count->set_default_properties(count_prop);
-	count->set_polling_period(1000);
+	//	Not Polled
 	count->set_disp_level(Tango::OPERATOR);
 	//	Not Memorized
 	att_list.push_back(count);
+
+	//	Attribute : TimeInterval
+	TimeIntervalAttrib	*timeinterval = new TimeIntervalAttrib();
+	Tango::UserDefaultAttrProp	timeinterval_prop;
+	timeinterval_prop.set_description("Time interval in ms");
+	timeinterval_prop.set_label("Time interval");
+	timeinterval_prop.set_unit("ms");
+	//	standard_unit	not set for TimeInterval
+	//	display_unit	not set for TimeInterval
+	//	format	not set for TimeInterval
+	//	max_value	not set for TimeInterval
+	//	min_value	not set for TimeInterval
+	//	max_alarm	not set for TimeInterval
+	//	min_alarm	not set for TimeInterval
+	//	max_warning	not set for TimeInterval
+	//	min_warning	not set for TimeInterval
+	//	delta_t	not set for TimeInterval
+	//	delta_val	not set for TimeInterval
+	
+	timeinterval->set_default_properties(timeinterval_prop);
+	//	Not Polled
+	timeinterval->set_disp_level(Tango::OPERATOR);
+	//	Not Memorized
+	att_list.push_back(timeinterval);
+
+	//	Attribute : Complete
+	CompleteAttrib	*complete = new CompleteAttrib();
+	Tango::UserDefaultAttrProp	complete_prop;
+	//	description	not set for Complete
+	//	label	not set for Complete
+	//	unit	not set for Complete
+	//	standard_unit	not set for Complete
+	//	display_unit	not set for Complete
+	//	format	not set for Complete
+	//	max_value	not set for Complete
+	//	min_value	not set for Complete
+	//	max_alarm	not set for Complete
+	//	min_alarm	not set for Complete
+	//	max_warning	not set for Complete
+	//	min_warning	not set for Complete
+	//	delta_t	not set for Complete
+	//	delta_val	not set for Complete
+	
+	complete->set_default_properties(complete_prop);
+	complete->set_polling_period(1000);
+	complete->set_disp_level(Tango::OPERATOR);
+	//	Not Memorized
+	att_list.push_back(complete);
 
 
 	//	Create a list of static attributes
@@ -392,6 +522,33 @@ void MonitorClass::command_factory()
 	
 	/*----- PROTECTED REGION END -----*/	//	MonitorClass::command_factory_before
 
+
+	//	Command StartCount
+	StartCountClass	*pStartCountCmd =
+		new StartCountClass("StartCount",
+			Tango::DEV_VOID, Tango::DEV_VOID,
+			"",
+			"",
+			Tango::OPERATOR);
+	command_list.push_back(pStartCountCmd);
+
+	//	Command StopCount
+	StopCountClass	*pStopCountCmd =
+		new StopCountClass("StopCount",
+			Tango::DEV_VOID, Tango::DEV_VOID,
+			"",
+			"",
+			Tango::OPERATOR);
+	command_list.push_back(pStopCountCmd);
+
+	//	Command ResetCounter
+	ResetCounterClass	*pResetCounterCmd =
+		new ResetCounterClass("ResetCounter",
+			Tango::DEV_VOID, Tango::DEV_VOID,
+			"",
+			"",
+			Tango::OPERATOR);
+	command_list.push_back(pResetCounterCmd);
 
 	/*----- PROTECTED REGION ID(MonitorClass::command_factory_after) ENABLED START -----*/
 	

@@ -61,10 +61,87 @@ bool Monitor::is_Count_allowed(TANGO_UNUSED(Tango::AttReqType type))
 	return true;
 }
 
+//--------------------------------------------------------
+/**
+ *	Method      : Monitor::is_TimeInterval_allowed()
+ *	Description : Execution allowed for TimeInterval attribute
+ */
+//--------------------------------------------------------
+bool Monitor::is_TimeInterval_allowed(TANGO_UNUSED(Tango::AttReqType type))
+{
+	//	Not any excluded states for TimeInterval attribute in Write access.
+	/*----- PROTECTED REGION ID(Monitor::TimeIntervalStateAllowed_WRITE) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	Monitor::TimeIntervalStateAllowed_WRITE
+
+	return true;
+}
+
+//--------------------------------------------------------
+/**
+ *	Method      : Monitor::is_Complete_allowed()
+ *	Description : Execution allowed for Complete attribute
+ */
+//--------------------------------------------------------
+bool Monitor::is_Complete_allowed(TANGO_UNUSED(Tango::AttReqType type))
+{
+
+	//	Not any excluded states for Complete attribute in read access.
+	/*----- PROTECTED REGION ID(Monitor::CompleteStateAllowed_READ) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	Monitor::CompleteStateAllowed_READ
+	return true;
+}
+
 
 //=================================================
 //		Commands Allowed Methods
 //=================================================
+
+//--------------------------------------------------------
+/**
+ *	Method      : Monitor::is_StartCount_allowed()
+ *	Description : Execution allowed for StartCount attribute
+ */
+//--------------------------------------------------------
+bool Monitor::is_StartCount_allowed(TANGO_UNUSED(const CORBA::Any &any))
+{
+	//	Not any excluded states for StartCount command.
+	/*----- PROTECTED REGION ID(Monitor::StartCountStateAllowed) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	Monitor::StartCountStateAllowed
+	return true;
+}
+
+//--------------------------------------------------------
+/**
+ *	Method      : Monitor::is_StopCount_allowed()
+ *	Description : Execution allowed for StopCount attribute
+ */
+//--------------------------------------------------------
+bool Monitor::is_StopCount_allowed(TANGO_UNUSED(const CORBA::Any &any))
+{
+	//	Not any excluded states for StopCount command.
+	/*----- PROTECTED REGION ID(Monitor::StopCountStateAllowed) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	Monitor::StopCountStateAllowed
+	return true;
+}
+
+//--------------------------------------------------------
+/**
+ *	Method      : Monitor::is_ResetCounter_allowed()
+ *	Description : Execution allowed for ResetCounter attribute
+ */
+//--------------------------------------------------------
+bool Monitor::is_ResetCounter_allowed(TANGO_UNUSED(const CORBA::Any &any))
+{
+	//	Not any excluded states for ResetCounter command.
+	/*----- PROTECTED REGION ID(Monitor::ResetCounterStateAllowed) ENABLED START -----*/
+	
+	/*----- PROTECTED REGION END -----*/	//	Monitor::ResetCounterStateAllowed
+	return true;
+}
 
 
 /*----- PROTECTED REGION ID(Monitor::MonitorStateAllowed.AdditionalMethods) ENABLED START -----*/
