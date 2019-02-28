@@ -13,7 +13,7 @@ Counter::Counter(std::string device) {
     }
 
     /* read 4 ofsset addr from cs0 */
-    char test = (read8CS0(COUNTER_TIMER_STATUS_REGISTER)&0x7f);  // <- this is value 0x55
+    char test = (char)(read8CS0(COUNTER_TIMER_STATUS_REGISTER)&0x7f);  // <- this is value 0x55
     if(test != 0x55){
         status = COUNTER_STATUS_NOT_COUNTER_DEVICE; //this is not counter device!
         return;
@@ -50,9 +50,14 @@ void Counter::startTimer() {
     control_timer |= (COUNTER_TR_GATE_SEL | COUNTER_TR_CLR_GATE);
     write8CS0(COUNTER_TIMER_REGISTER,control_timer);
 
-    std::cout << "start! buff: 0x" << std::hex << read32CS0(COUNTER_TIMER_BUFFER_REGISTER) << "\n";
+    /* load value from preset value register (buffer register) to timer value register (timer read register) */
+    control_timer = read8CS0(COUNTER_TIMER_REGISTER);
+    control_timer |= COUNTER_TR_LOAD_GATE;
+    control_timer &=~ COUNTER_TR_CLR_GATE;
+    write8CS0(COUNTER_TIMER_REGISTER,control_timer);
 
-    write8CS0(COUNTER_CONTROL_REGISTER,0x0f);                    // write 0b1111 to D0..D3 in CONTROL REGISTER (Mask ?!)
+
+    write8CS0(COUNTER_CONTROL_REGISTER,0x0f);                    // write 0b1111 to D0..D3 in CONTROL REGISTER (operation "not" for all inputs)
     char control_register = read8CS0(COUNTER_CONTROL_REGISTER);
     control_register|= (COUNTER_CR_RGCLR|COUNTER_CR_END_CRM);
     write8CS0(COUNTER_CONTROL_REGISTER,control_register);
@@ -63,7 +68,7 @@ void Counter::startTimer() {
 
 void Counter::stopTimer() {
     char control_timer = read8CS0(COUNTER_TIMER_REGISTER);
-    control_timer &=~ COUNTER_TR_EN_GATE;
+    control_timer &=~ (COUNTER_TR_EN_GATE|COUNTER_TR_CLR_GATE);
     write8CS0(COUNTER_TIMER_REGISTER,control_timer);
 
     char control_register = read8CS0(COUNTER_CONTROL_REGISTER);
@@ -73,11 +78,18 @@ void Counter::stopTimer() {
 
 
 bool Counter::testTimer() {
+    /* test GATE_STATE bit */
     if(read8CS0(COUNTER_TIMER_STATUS_REGISTER)&0x80){
         return true;
-    }else{
+    }else {
         return false;
     }
+}
+
+void Counter::resetCounter() {
+    char control_register = read8CS0(COUNTER_CONTROL_REGISTER);
+    control_register &= ~COUNTER_CR_RGCLR;  // clear counters
+    write8CS0(COUNTER_CONTROL_REGISTER,control_register);
 }
 
 uint32_t Counter::readTimer(){
@@ -94,8 +106,6 @@ void Counter::resetTimer() {
     control_timer |= COUNTER_TR_CLR_GATE;
     write8CS0(COUNTER_TIMER_REGISTER,control_timer);
 }
-
-
 
 
 unsigned char Counter::read8CS0(long offset){

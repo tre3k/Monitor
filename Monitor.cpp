@@ -322,9 +322,7 @@ void Monitor::write_TimeInterval(Tango::WAttribute &attr)
 	attr.get_write_value(w_val);
 	/*----- PROTECTED REGION ID(Monitor::write_TimeInterval) ENABLED START -----*/
 
-	std::cout << "set time interval: " << std::dec << w_val << "\n";
 	cr->setTimeInterval(w_val);
-
 
 	/*----- PROTECTED REGION END -----*/	//	Monitor::write_TimeInterval
 }
@@ -343,17 +341,15 @@ void Monitor::read_Complete(Tango::Attribute &attr)
 	/*----- PROTECTED REGION ID(Monitor::read_Complete) ENABLED START -----*/
 	//	Set the attribute value
 
-	*attr_Complete_read = cr->testTimer();
+	*attr_Complete_read = !cr->testTimer();
 
 	attr.set_value(attr_Complete_read);
+
 	if(*attr_Complete_read) {
 		device_state = Tango::ON;
 		device_status = "Ok";
-		cr->stopTimer();
-		std::cout << "timer: "<< std::dec << cr->readTimer() << "\n";
-		cr->resetTimer();
-        std::cout << "timer reset: " <<  std::dec << cr->readTimer() << "\n";
 	}
+
 	
 	/*----- PROTECTED REGION END -----*/	//	Monitor::read_Complete
 }
@@ -404,7 +400,7 @@ void Monitor::stop_count()
 	DEBUG_STREAM << "Monitor::StopCount()  - " << device_name << endl;
 	/*----- PROTECTED REGION ID(Monitor::stop_count) ENABLED START -----*/
 	
-	//	Add your own code
+	cr->stopTimer();
 	
 	/*----- PROTECTED REGION END -----*/	//	Monitor::stop_count
 }
@@ -420,7 +416,7 @@ void Monitor::reset_counter()
 	DEBUG_STREAM << "Monitor::ResetCounter()  - " << device_name << endl;
 	/*----- PROTECTED REGION ID(Monitor::reset_counter) ENABLED START -----*/
 	
-	//	Add your own code
+	cr->resetCounter();
 	
 	/*----- PROTECTED REGION END -----*/	//	Monitor::reset_counter
 }
